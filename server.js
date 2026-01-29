@@ -33,42 +33,21 @@ app.get("/", (req, res) => {
 });
 
 app.post("/ui/create", express.urlencoded({ extended: false }), async (req, res) => {
-  try {
-    const host = req.get("host");
-    const url = `${req.protocol}://${host}/api/pastes`;
+  const { content, ttl_seconds, max_views } = req.body;
 
-    const body = {
-      content: req.body.content,
-      ttl_seconds: req.body.ttl_seconds ? Number(req.body.ttl_seconds) : undefined,
-      max_views: req.body.max_views ? Number(req.body.max_views) : undefined
-    };
+  const id = generateId();
+  const expiresAt = ttl_seconds ? now(req) + ttl_seconds * 1000 : null;
 
-    console.log(body);
+  await redis.hset(pasteKey(id), {
+    content: content.trim(),
+    expires_at: expiresAt ?? "",
+    max_views: max_views ? Number(max_views) : "",
+    views: 0
+  });
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    });
-
-    if (!response.ok) {
-      const text = await response.text();
-      return res.status(500).send("Error creating paste: " + text);
-    }
-
-    const data = await response.json();
-    console.log(data,"here is the data")
-
-    if (!data.url) {
-      return res.status(500).send("Paste creation failed: URL missing");
-    }
-
-    res.redirect(String(data.url));
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error creating paste");
-  }
+  res.redirect(`/p/${id}`);
 });
+
 
 
 app.use("/api",router);
