@@ -3,7 +3,7 @@ import  redis  from "./redis.js";
 import helmet from "helmet";
 import "dotenv/config";
 import router from "./router.js"
-import { pasteKey,now } from "./utils.js";
+import { pasteKey,now,generateId } from "./utils.js";
 const app = express();
 app.use(express.json());
 app.use(
