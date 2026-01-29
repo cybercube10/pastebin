@@ -33,19 +33,26 @@ app.get("/", (req, res) => {
 });
 
 app.post("/ui/create", express.urlencoded({ extended: false }), async (req, res) => {
-  const { content, ttl_seconds, max_views } = req.body;
+  try {
+    const { content, ttl_seconds, max_views } = req.body;
 
-  const id = generateId();
-  const expiresAt = ttl_seconds ? now(req) + ttl_seconds * 1000 : null;
+    if (!content || !content.trim()) return res.status(400).send("Content required");
 
-  await redis.hset(pasteKey(id), {
-    content: content.trim(),
-    expires_at: expiresAt ?? "",
-    max_views: max_views ? Number(max_views) : "",
-    views: 0
-  });
+    const id = generateId();
+    const expiresAt = ttl_seconds ? Date.now() + Number(ttl_seconds) * 1000 : null;
 
-  res.redirect(`/p/${id}`);
+    await redis.hset(pasteKey(id), {
+      content: content.trim(),
+      expires_at: expiresAt ?? "",
+      max_views: max_views ? Number(max_views) : "",
+      views: 0
+    });
+
+    res.redirect(`/p/${id}`);
+  } catch (err) {
+    console.error("POST /ui/create error:", err);
+    res.status(500).send("Server error creating paste");
+  }
 });
 
 
