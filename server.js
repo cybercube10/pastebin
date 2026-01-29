@@ -6,7 +6,16 @@ import router from "./router.js"
 import { pasteKey,now } from "./utils.js";
 const app = express();
 app.use(express.json());
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"], 
+      },
+    },
+  })
+);
 app.get("/", (req, res) => {
   res.send(`
     <html>
