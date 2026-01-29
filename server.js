@@ -34,11 +34,17 @@ app.get("/", (req, res) => {
 
 app.post("/ui/create", express.urlencoded({ extended: false }), async (req, res) => {
   try {
-    const { content, ttl_seconds, max_views } = req.body;
+    console.log("Form body:", req.body);
 
-    if (!content || !content.trim()) return res.status(400).send("Content required");
+    const { content, ttl_seconds, max_views } = req.body;
+    if (!content || !content.trim()) {
+      console.log("Content is invalid:", content);
+      return res.status(400).send("Content required");
+    }
 
     const id = generateId();
+    console.log("Generated ID:", id);
+
     const expiresAt = ttl_seconds ? Date.now() + Number(ttl_seconds) * 1000 : null;
 
     await redis.hset(pasteKey(id), {
@@ -47,6 +53,8 @@ app.post("/ui/create", express.urlencoded({ extended: false }), async (req, res)
       max_views: max_views ? Number(max_views) : "",
       views: 0
     });
+
+    console.log("Paste stored in Redis");
 
     res.redirect(`/p/${id}`);
   } catch (err) {
